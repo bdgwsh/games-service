@@ -48,17 +48,19 @@ func (s *server) getGames(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(games)
 }
 
-/* func getBook(w http.ResponseWriter, r *http.Request) {
+ func (s *server) getGame(w http.ResponseWriter, r *http.Request) {
   w.Header().Set("Content-Type", "application/json")
   params := mux.Vars(r)
-  for _, item := range books {
-    if item.ID == params["id"] {
-      json.NewEncoder(w).Encode(item)
-      return
-    }
-  }
-  json.NewEncoder(w).Encode(&Book{})
-} */
+	row := s.db.QueryRow("SELECT * FROM games WHERE id = $1", params["id"])
+
+
+    game := new(Game)
+    err := row.Scan(&game.Id, &game.Title, &game.Developer, &game.ReleaseDate, &game.Description, &game.Metacritic)
+		if err != nil {
+			panic(err)
+		}
+  json.NewEncoder(w).Encode(game)
+}
 
 func createGame(w http.ResponseWriter, r *http.Request) {
 
@@ -96,7 +98,7 @@ func main() {
 
 
 	r.HandleFunc("/games", s.getGames).Methods("GET")
-	// r.HandleFunc("/games/{id}", getGame).Methods("GET")
+	r.HandleFunc("/games/{id}", s.getGame).Methods("GET")
 	r.HandleFunc("/games", createGame).Methods("POST")
 	r.HandleFunc("/games/{id}", updateGame).Methods("PUT")
 	r.HandleFunc("/games/{id}", deleteGame).Methods("DELETE")
